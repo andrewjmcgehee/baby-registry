@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="#5d8a6b"/>
+  <g fill="#fbf6ec" stroke="#fbf6ec" stroke-linejoin="round" stroke-linecap="round">
+    <!-- teat -->
+    <path d="M14.2 4.2c0-1 3.6-1 3.6 0 0 1-.4 1.6-.4 2.4h-2.8c0-.8-.4-1.4-.4-2.4z" stroke-width="0.6"/>
+    <!-- collar -->
+    <rect x="12.4" y="6.6" width="7.2" height="2.8" rx="1.1" stroke-width="0.6"/>
+    <!-- bottle body -->
+    <path d="M12 10.2h8c.7 0 1.2.5 1.2 1.2v13.8c0 1.7-1.3 3-3 3h-4.4c-1.7 0-3-1.3-3-3V11.4c0-.7.5-1.2 1.2-1.2z" stroke-width="0.8"/>
+  </g>
+  <!-- milk level + measure marks -->
+  <path d="M10.9 16h10.2v8.4c0 1.7-1.3 3-3 3h-4.4c-1.7 0-3-1.3-3-3V16z" fill="#9fc8a8"/>
+  <g stroke="#5d8a6b" stroke-width="1" stroke-linecap="round">
+    <line x1="13" y1="12.4" x2="15.6" y2="12.4"/>
+    <line x1="13" y1="15" x2="15.6" y2="15"/>
+  </g>
+</svg>
