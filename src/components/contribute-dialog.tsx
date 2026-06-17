@@ -32,11 +32,10 @@ import { cn } from "#/lib/utils.ts";
 
 const PRESET_AMOUNTS = [10, 25, 50, 100];
 
-const METHOD_ORDER: PaymentMethod[] = ["venmo", "paypal", "cashapp"];
+const METHOD_ORDER: PaymentMethod[] = ["venmo", "paypal"];
 const METHOD_STYLES: Record<PaymentMethod, string> = {
 	venmo: "bg-[#008CFF] hover:bg-[#0078dd] text-white",
 	paypal: "bg-[#003087] hover:bg-[#00246b] text-white",
-	cashapp: "bg-[#00D632] hover:bg-[#00bb2c] text-white",
 };
 
 export interface ContributionPayload {
