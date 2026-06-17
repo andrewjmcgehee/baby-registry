@@ -110,8 +110,12 @@ async function requireAdmin(): Promise<void> {
 }
 
 // --- Convex client ----------------------------------------------------------
+// The Convex URL is a build-time public value (same one the client uses), so we
+// read it from import.meta.env — Vite inlines it, so no runtime env var needed.
 function convex(): ConvexHttpClient {
-	return new ConvexHttpClient(requireEnv("VITE_CONVEX_URL"));
+	const url = import.meta.env.VITE_CONVEX_URL;
+	if (!url) throw new Error("VITE_CONVEX_URL is not set at build time.");
+	return new ConvexHttpClient(url);
 }
 
 // --- server functions -------------------------------------------------------
