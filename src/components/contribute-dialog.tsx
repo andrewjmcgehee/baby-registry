@@ -15,7 +15,7 @@ import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
 import { Separator } from "#/components/ui/separator.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
-import type { RegistryItem } from "#/lib/registry-data.ts";
+import { itemTotalGoal, type RegistryItem } from "#/lib/registry-data.ts";
 import { cn } from "#/lib/utils.ts";
 
 const PRESET_AMOUNTS = [10, 25, 50, 100];
@@ -50,7 +50,7 @@ export function ContributeDialog({
 
 	if (!item) return null;
 
-	const remaining = Math.max(item.goal - item.raised, 0);
+	const remaining = Math.max(itemTotalGoal(item) - item.raised, 0);
 	const numericAmount = typeof amount === "number" ? amount : 0;
 
 	function handleSubmit(e: React.FormEvent) {
@@ -165,7 +165,7 @@ export function ContributeDialog({
 								<Label htmlFor="contributor-name">Your name (optional)</Label>
 								<Input
 									id="contributor-name"
-									placeholder="Aunt Jamie"
+									placeholder="Peter Piper"
 									value={name}
 									onChange={(e) => setName(e.target.value)}
 								/>

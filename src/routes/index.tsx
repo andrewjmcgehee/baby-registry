@@ -1,12 +1,14 @@
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Baby, Gift } from "lucide-react";
+import { Baby, ChevronLeft, ChevronRight, Gift, Loader2 } from "lucide-react";
 import * as React from "react";
-
 import { ContributeDialog } from "#/components/contribute-dialog.tsx";
 import { RegistryItemCard } from "#/components/registry-item-card.tsx";
 import { SiteFooter } from "#/components/site-footer.tsx";
 import { SiteHeader } from "#/components/site-header.tsx";
 import { Avatar, AvatarFallback } from "#/components/ui/avatar.tsx";
+import { Button } from "#/components/ui/button.tsx";
 import { Card } from "#/components/ui/card.tsx";
 import { Progress } from "#/components/ui/progress.tsx";
 import {
@@ -21,9 +23,12 @@ import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
 import {
 	CATEGORIES,
 	COUPLE,
-	REGISTRY_ITEMS,
+	itemTotalGoal,
 	type RegistryItem,
 } from "#/lib/registry-data.ts";
+import { cn } from "#/lib/utils.ts";
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -38,35 +43,45 @@ const SORT_LABELS: Record<SortKey, string> = {
 	name: "Name (A–Z)",
 };
 
+const PAGE_SIZE = 9;
+
 function Home() {
-	// Local, in-memory state so the contribute flow feels alive in this skeleton.
-	// Swap this for a Convex query/mutation once we add the schema.
-	const [items, setItems] = React.useState<RegistryItem[]>(REGISTRY_ITEMS);
+	// Live data from Convex. `listItems` returns each item with its `raised`
+	// total summed from the contributions table.
+	const { data, isPending } = useQuery(convexQuery(api.registry.listItems, {}));
+	const items = data ?? [];
+	const addContribution = useConvexMutation(api.registry.addContribution);
+
 	const [filter, setFilter] = React.useState<Filter>("All");
 	const [sort, setSort] = React.useState<SortKey>("featured");
 	const [hideFunded, setHideFunded] = React.useState(false);
 	const [activeItem, setActiveItem] = React.useState<RegistryItem | null>(null);
 	const [dialogOpen, setDialogOpen] = React.useState(false);
 
-	const totalGoal = items.reduce((sum, i) => sum + i.goal, 0);
+	const totalGoal = items.reduce((sum, i) => sum + itemTotalGoal(i), 0);
 	const totalRaised = items.reduce(
-		(sum, i) => sum + Math.min(i.raised, i.goal),
+		(sum, i) => sum + Math.min(i.raised, itemTotalGoal(i)),
 		0,
 	);
-	const overallPct = Math.round((totalRaised / totalGoal) * 100);
-	const fundedCount = items.filter((i) => i.raised >= i.goal).length;
+	const overallPct =
+		totalGoal > 0 ? Math.round((totalRaised / totalGoal) * 100) : 0;
+	const fundedCount = items.filter((i) => i.raised >= itemTotalGoal(i)).length;
 
 	const visibleItems = React.useMemo(() => {
-		const pct = (i: RegistryItem) => i.raised / i.goal;
+		// Dollars still needed to fully fund an item, floored at 0.
+		const remaining = (i: RegistryItem) =>
+			Math.max(0, itemTotalGoal(i) - i.raised);
 		let list =
 			filter === "All" ? items : items.filter((i) => i.category === filter);
-		if (hideFunded) list = list.filter((i) => i.raised < i.goal);
+		if (hideFunded) list = list.filter((i) => i.raised < itemTotalGoal(i));
 		switch (sort) {
 			case "most":
-				list = [...list].sort((a, b) => pct(b) - pct(a));
+				// Most funded → smallest remaining first (inverse of "least").
+				list = [...list].sort((a, b) => remaining(a) - remaining(b));
 				break;
 			case "least":
-				list = [...list].sort((a, b) => pct(a) - pct(b));
+				// Needs the most help → largest remaining first.
+				list = [...list].sort((a, b) => remaining(b) - remaining(a));
 				break;
 			case "name":
 				list = [...list].sort((a, b) => a.name.localeCompare(b.name));
@@ -75,17 +90,37 @@ function Home() {
 		return list;
 	}, [items, filter, sort, hideFunded]);
 
+	// Client-side pagination over the already-filtered/sorted list.
+	const [page, setPage] = React.useState(0);
+	// Jump back to the first page whenever the result set changes.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: reset on filter changes
+	React.useEffect(() => {
+		setPage(0);
+	}, [filter, sort, hideFunded]);
+
+	const pageCount = Math.max(1, Math.ceil(visibleItems.length / PAGE_SIZE));
+	// Clamp in case the list shrank (e.g. an item became "funded" while hidden).
+	const currentPage = Math.min(page, pageCount - 1);
+	const pagedItems = visibleItems.slice(
+		currentPage * PAGE_SIZE,
+		currentPage * PAGE_SIZE + PAGE_SIZE,
+	);
+
+	const cardsRef = React.useRef<HTMLElement>(null);
+	function goToPage(next: number) {
+		setPage(Math.max(0, Math.min(pageCount - 1, next)));
+		cardsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+	}
+
 	function openContribute(item: RegistryItem) {
 		setActiveItem(item);
 		setDialogOpen(true);
 	}
 
-	function handleContribute(itemId: string, amount: number) {
-		setItems((prev) =>
-			prev.map((i) =>
-				i.id === itemId ? { ...i, raised: i.raised + amount } : i,
-			),
-		);
+	// Persist the contribution. The query result re-renders automatically via
+	// Convex's live subscription, so `raised` updates without any local patching.
+	async function handleContribute(itemId: string, amount: number) {
+		await addContribution({ itemId: itemId as Id<"registryItems">, amount });
 	}
 
 	return (
@@ -126,93 +161,127 @@ function Home() {
 					</div>
 
 					{/* Overall progress card */}
-					<Card className="rise-in mx-auto mt-10 max-w-2xl p-6 text-left">
-						<div className="flex items-center justify-between gap-4">
-							<div className="flex items-center gap-2">
-								<span className="flex size-9 items-center justify-center rounded-full bg-secondary">
-									<Gift className="size-4 text-secondary-foreground" />
-								</span>
-								<div>
-									<p className="font-display font-bold leading-tight">
-										${totalRaised.toLocaleString()} raised
-									</p>
-									<p className="text-sm text-muted-foreground">
-										of ${totalGoal.toLocaleString()} goal · {fundedCount} of{" "}
-										{items.length} fully funded
-									</p>
+					{items.length > 0 && (
+						<Card className="rise-in mx-auto mt-10 max-w-2xl p-6 text-left">
+							<div className="flex items-center justify-between gap-4">
+								<div className="flex items-center gap-2">
+									<span className="flex size-9 items-center justify-center rounded-full bg-secondary">
+										<Gift className="size-4 text-secondary-foreground" />
+									</span>
+									<div>
+										<p className="font-display font-bold leading-tight">
+											${totalRaised.toLocaleString()} raised
+										</p>
+										<p className="text-sm text-muted-foreground">
+											of ${totalGoal.toLocaleString()} goal · {fundedCount} of{" "}
+											{items.length} fully funded
+										</p>
+									</div>
 								</div>
+								<span className="font-display text-2xl font-bold text-sage-deep">
+									{overallPct}%
+								</span>
 							</div>
-							<span className="font-display text-2xl font-bold text-sage-deep">
-								{overallPct}%
-							</span>
-						</div>
-						<Progress value={overallPct} className="mt-4 h-3 bg-muted" />
-					</Card>
+							<Progress value={overallPct} className="mt-4 h-3 bg-muted" />
+						</Card>
+					)}
 				</section>
 
 				{/* Category filter + controls */}
-				<section className="page-wrap space-y-4 pt-4">
-					<Tabs
-						value={filter}
-						onValueChange={(value) => setFilter(value as Filter)}
-					>
-						<TabsList variant="pill">
-							{(["All", ...CATEGORIES] as Filter[]).map((cat) => (
-								<TabsTrigger key={cat} value={cat}>
-									{cat}
-								</TabsTrigger>
-							))}
-						</TabsList>
-					</Tabs>
-
-					<div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-						<label
-							htmlFor="hide-funded"
-							className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted-foreground"
+				{items.length > 0 && (
+					<section className="page-wrap space-y-4 pt-4">
+						<Tabs
+							value={filter}
+							onValueChange={(value) => setFilter(value as Filter)}
 						>
-							<Switch
-								id="hide-funded"
-								checked={hideFunded}
-								onCheckedChange={setHideFunded}
-							/>
-							Hide fully funded gifts
-						</label>
+							<TabsList variant="pill">
+								{(["All", ...CATEGORIES] as Filter[]).map((cat) => (
+									<TabsTrigger key={cat} value={cat}>
+										{cat}
+									</TabsTrigger>
+								))}
+							</TabsList>
+						</Tabs>
 
-						<div className="flex items-center gap-2">
-							<span className="text-sm font-semibold text-muted-foreground">
-								Sort
-							</span>
-							<Select
-								value={sort}
-								onValueChange={(value) => setSort(value as SortKey)}
+						<div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+							<label
+								htmlFor="hide-funded"
+								className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted-foreground"
 							>
-								<SelectTrigger className="w-[200px] rounded-full bg-card">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
-										<SelectItem key={key} value={key}>
-											{SORT_LABELS[key]}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+								<Switch
+									id="hide-funded"
+									checked={hideFunded}
+									onCheckedChange={setHideFunded}
+								/>
+								Hide fully funded gifts
+							</label>
+
+							<div className="flex items-center gap-2">
+								<span className="text-sm font-semibold text-muted-foreground">
+									Sort
+								</span>
+								<Select
+									value={sort}
+									onValueChange={(value) => setSort(value as SortKey)}
+								>
+									<SelectTrigger className="w-50 rounded-full bg-card">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										{(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+											<SelectItem key={key} value={key}>
+												{SORT_LABELS[key]}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
 						</div>
-					</div>
-				</section>
+					</section>
+				)}
 
 				{/* Item grid */}
-				<section className="page-wrap pt-8 pb-4">
-					{visibleItems.length > 0 ? (
-						<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-							{visibleItems.map((item) => (
-								<RegistryItemCard
-									key={item.id}
-									item={item}
-									onContribute={openContribute}
-								/>
-							))}
+				<section ref={cardsRef} className="page-wrap scroll-mt-24 pt-8 pb-4">
+					{isPending ? (
+						<p className="flex items-center justify-center py-12 text-muted-foreground">
+							<Loader2 className="mr-2 size-4 animate-spin" />
+							Loading the registry…
+						</p>
+					) : items.length === 0 ? (
+						<div className="soft-card mx-auto max-w-md p-10 text-center">
+							<div className="text-5xl">🍼</div>
+							<h2 className="mt-4 font-display text-xl font-bold">
+								The registry is on its way!
+							</h2>
+							<p className="mt-2 text-sm text-muted-foreground">
+								{COUPLE.parentOne} &amp; {COUPLE.parentTwo} are still adding
+								their wishes. Check back soon to chip in. 💛
+							</p>
 						</div>
+					) : visibleItems.length > 0 ? (
+						<>
+							<Pager
+								currentPage={currentPage}
+								pageCount={pageCount}
+								onChange={goToPage}
+								className="mb-8"
+							/>
+							<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+								{pagedItems.map((item) => (
+									<RegistryItemCard
+										key={item.id}
+										item={item}
+										onContribute={openContribute}
+									/>
+								))}
+							</div>
+							<Pager
+								currentPage={currentPage}
+								pageCount={pageCount}
+								onChange={goToPage}
+								className="mt-10"
+							/>
+						</>
 					) : (
 						<p className="py-12 text-center text-muted-foreground">
 							Every gift here is fully funded — thank you! 💛
@@ -229,6 +298,48 @@ function Home() {
 				onOpenChange={setDialogOpen}
 				onContribute={handleContribute}
 			/>
+		</div>
+	);
+}
+
+function Pager({
+	currentPage,
+	pageCount,
+	onChange,
+	className,
+}: {
+	currentPage: number;
+	pageCount: number;
+	/** Receives the requested absolute page index (zero-based). */
+	onChange: (page: number) => void;
+	className?: string;
+}) {
+	if (pageCount <= 1) return null;
+	return (
+		<div className={cn("flex items-center justify-center gap-4", className)}>
+			<Button
+				variant="outline"
+				size="sm"
+				className="rounded-full"
+				onClick={() => onChange(currentPage - 1)}
+				disabled={currentPage === 0}
+			>
+				<ChevronLeft className="size-4" />
+				Prev
+			</Button>
+			<span className="text-sm font-semibold text-muted-foreground">
+				Page {currentPage + 1} of {pageCount}
+			</span>
+			<Button
+				variant="outline"
+				size="sm"
+				className="rounded-full"
+				onClick={() => onChange(currentPage + 1)}
+				disabled={currentPage >= pageCount - 1}
+			>
+				Next
+				<ChevronRight className="size-4" />
+			</Button>
 		</div>
 	);
 }

@@ -4,7 +4,11 @@ import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Card } from "#/components/ui/card.tsx";
 import { Progress } from "#/components/ui/progress.tsx";
-import { type RegistryItem, TILE_TINTS } from "#/lib/registry-data.ts";
+import {
+	itemTotalGoal,
+	type RegistryItem,
+	TILE_TINTS,
+} from "#/lib/registry-data.ts";
 
 interface RegistryItemCardProps {
 	item: RegistryItem;
@@ -15,9 +19,11 @@ export function RegistryItemCard({
 	item,
 	onContribute,
 }: RegistryItemCardProps) {
-	const pct = Math.min(Math.round((item.raised / item.goal) * 100), 100);
-	const funded = item.raised >= item.goal;
-	const remaining = Math.max(item.goal - item.raised, 0);
+	const total = itemTotalGoal(item);
+	const count = item.count ?? 1;
+	const pct = Math.min(Math.round((item.raised / total) * 100), 100);
+	const funded = item.raised >= total;
+	const remaining = Math.max(total - item.raised, 0);
 	const tint = TILE_TINTS[item.tint];
 
 	return (
@@ -50,6 +56,11 @@ export function RegistryItemCard({
 					<h3 className="font-display text-lg font-bold leading-tight">
 						{item.name}
 					</h3>
+					{count > 1 && (
+						<p className="text-xs font-semibold text-sage-deep">
+							${item.price.toLocaleString()} each · {count} wanted
+						</p>
+					)}
 					<p className="text-sm text-muted-foreground">{item.blurb}</p>
 				</div>
 
@@ -60,7 +71,7 @@ export function RegistryItemCard({
 							${item.raised.toLocaleString()}
 							<span className="font-normal text-muted-foreground">
 								{" "}
-								of ${item.goal.toLocaleString()}
+								of ${total.toLocaleString()}
 							</span>
 						</span>
 						<span className="font-semibold text-sage-deep">{pct}%</span>

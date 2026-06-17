@@ -15,9 +15,9 @@ export type RegistryCategory =
 	| "Health & Safety"
 	| "Bathing"
 	| "Nursery"
-	| "Clothing"
 	| "Playing"
-	| "Growing Up";
+	| "Growing Up"
+	| "For the Parents";
 
 export interface RegistryItem {
 	id: string;
@@ -26,12 +26,21 @@ export interface RegistryItem {
 	emoji: string;
 	blurb: string;
 	category: RegistryCategory;
-	/** Funding goal in whole dollars. */
-	goal: number;
+	/** Price of a single unit, in whole dollars. Total target = price × count. */
+	price: number;
+	/** How many of this item we'd love (e.g. 3 plates). Defaults to 1. */
+	count?: number;
 	/** Dollars contributed so far. */
 	raised: number;
 	/** Pastel tile color key, see TILE_TINTS below. */
 	tint: TileTint;
+}
+
+/** Total funding target for an item: unit price × quantity. */
+export function itemTotalGoal(
+	item: Pick<RegistryItem, "price" | "count">,
+): number {
+	return item.price * (item.count ?? 1);
 }
 
 export type TileTint = "sage" | "honey" | "clay" | "sky";
@@ -60,9 +69,9 @@ export const CATEGORIES: RegistryCategory[] = [
 	"Gear",
 	"Health & Safety",
 	"Bathing",
-	"Clothing",
 	"Playing",
 	"Growing Up",
+	"For the Parents",
 ];
 
 export const REGISTRY_ITEMS: RegistryItem[] = [
@@ -73,7 +82,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		blurb:
 			"A cozy crib that grows into a toddler bed — sweet dreams for years to come.",
 		category: "Nursery",
-		goal: 499,
+		price: 499,
 		raised: 320,
 		tint: "sage",
 	},
@@ -84,7 +93,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		blurb:
 			"Breathable, non-toxic, and just-right firm for safe little-one sleep.",
 		category: "Nursery",
-		goal: 180,
+		price: 180,
 		raised: 95,
 		tint: "sky",
 	},
@@ -94,7 +103,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		emoji: "🪑",
 		blurb: "For 2am feedings, lullabies, and a thousand snuggles in between.",
 		category: "Nursery",
-		goal: 350,
+		price: 350,
 		raised: 60,
 		tint: "clay",
 	},
@@ -104,7 +113,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		emoji: "🧸",
 		blurb: "Keep baby close and hands free on every little adventure.",
 		category: "Gear",
-		goal: 160,
+		price: 160,
 		raised: 160,
 		tint: "honey",
 	},
@@ -115,7 +124,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		blurb:
 			"One smooth-rolling system for strolls, errands, and first road trips.",
 		category: "Gear",
-		goal: 420,
+		price: 420,
 		raised: 135,
 		tint: "sage",
 	},
@@ -125,7 +134,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		emoji: "📷",
 		blurb: "A little peace of mind so we can peek in without a peep.",
 		category: "Health & Safety",
-		goal: 200,
+		price: 200,
 		raised: 200,
 		tint: "sky",
 	},
@@ -135,7 +144,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		emoji: "🧷",
 		blurb: "The least glamorous gift — and somehow the most appreciated.",
 		category: "Diapering",
-		goal: 300,
+		price: 300,
 		raised: 145,
 		tint: "honey",
 	},
@@ -145,7 +154,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		emoji: "🍼",
 		blurb: "Warm bottles in a blink — fewer tears all around.",
 		category: "Feeding",
-		goal: 60,
+		price: 60,
 		raised: 25,
 		tint: "clay",
 	},
@@ -155,7 +164,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		emoji: "🥄",
 		blurb: "For the gloriously messy era of first foods.",
 		category: "Feeding",
-		goal: 150,
+		price: 150,
 		raised: 0,
 		tint: "sage",
 	},
@@ -165,7 +174,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		emoji: "🧩",
 		blurb: "A squishy little world for tummy time and giggles.",
 		category: "Playing",
-		goal: 90,
+		price: 90,
 		raised: 45,
 		tint: "sky",
 	},
@@ -175,7 +184,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		emoji: "📚",
 		blurb: "Board books to read aloud before bed (over and over and over).",
 		category: "Playing",
-		goal: 120,
+		price: 120,
 		raised: 70,
 		tint: "honey",
 	},
@@ -186,7 +195,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		blurb:
 			"A tiny seed for someday-big dreams. Future grad thanks you in advance!",
 		category: "Growing Up",
-		goal: 1000,
+		price: 1000,
 		raised: 275,
 		tint: "clay",
 	},
@@ -195,7 +204,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 /**
  * Future Convex shape (ask before creating the schema):
  *
- *   registryItems: { name, emoji, blurb, category, goal, tint }
+ *   registryItems: { name, emoji, blurb, category, price, count, tint }
  *   contributions: { itemId: v.id('registryItems'), amount, name?, note?, createdAt }
  *
  * `raised` would then be derived by summing contributions per item.
