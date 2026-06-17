@@ -36,6 +36,17 @@ export default defineSchema({
     tint: tintValidator,
     /** Stable display order in the grid. */
     order: v.number(),
+    /**
+     * If true, the item keeps accepting contributions past its target.
+     * Most items are false (they "close" once fully funded). Optional so
+     * existing rows validate; treated as false when absent.
+     */
+    allowOverfunding: v.optional(v.boolean()),
+    /**
+     * If true, the "contribute toward anything" quick-give button skips this
+     * item when picking the neediest gift (e.g. an open-ended college fund).
+     */
+    excludeFromAnything: v.optional(v.boolean()),
   }),
 
   // Guests can ONLY contribute money — never purchase. Each contribution is a
@@ -46,5 +57,7 @@ export default defineSchema({
     amount: v.number(),
     name: v.optional(v.string()),
     note: v.optional(v.string()),
+    /** Which app they said they'd pay with: 'venmo' | 'paypal' | 'cashapp'. */
+    method: v.optional(v.string()),
   }).index('by_item', ['itemId']),
 })

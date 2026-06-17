@@ -1,11 +1,10 @@
 import {
-	Link,
 	createRouter as createTanStackRouter,
+	Link,
 } from "@tanstack/react-router";
-import { routeTree } from "./routeTree.gen";
-
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { getContext } from "./integrations/tanstack-query/root-provider";
+import { routeTree } from "./routeTree.gen";
 
 function NotFound() {
 	return (

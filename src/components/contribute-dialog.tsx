@@ -1,6 +1,5 @@
-import { Heart, PartyPopper } from "lucide-react";
+import { PartyPopper } from "lucide-react";
 import * as React from "react";
-
 import { Button } from "#/components/ui/button.tsx";
 import {
 	Dialog,
@@ -15,16 +14,45 @@ import { Input } from "#/components/ui/input.tsx";
 import { Label } from "#/components/ui/label.tsx";
 import { Separator } from "#/components/ui/separator.tsx";
 import { Textarea } from "#/components/ui/textarea.tsx";
-import { itemTotalGoal, type RegistryItem } from "#/lib/registry-data.ts";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "#/components/ui/tooltip.tsx";
+import {
+	itemTotalGoal,
+	PAYMENT_ICONS,
+	PAYMENT_LABELS,
+	type PaymentMethod,
+	paymentLinks,
+	type RegistryItem,
+} from "#/lib/registry-data.ts";
 import { cn } from "#/lib/utils.ts";
 
 const PRESET_AMOUNTS = [10, 25, 50, 100];
+
+const METHOD_ORDER: PaymentMethod[] = ["venmo", "paypal", "cashapp"];
+const METHOD_STYLES: Record<PaymentMethod, string> = {
+	venmo: "bg-[#008CFF] hover:bg-[#0078dd] text-white",
+	paypal: "bg-[#003087] hover:bg-[#00246b] text-white",
+	cashapp: "bg-[#00D632] hover:bg-[#00bb2c] text-white",
+};
+
+export interface ContributionPayload {
+	itemId: string;
+	itemName: string;
+	amount: number;
+	name?: string;
+	note?: string;
+	method: PaymentMethod;
+}
 
 interface ContributeDialogProps {
 	item: RegistryItem | null;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	onContribute: (itemId: string, amount: number) => void;
+	onContribute: (payload: ContributionPayload) => void | Promise<void>;
 }
 
 export function ContributeDialog({
@@ -36,15 +64,19 @@ export function ContributeDialog({
 	const [amount, setAmount] = React.useState<number | "">(25);
 	const [name, setName] = React.useState("");
 	const [note, setNote] = React.useState("");
-	const [done, setDone] = React.useState(false);
+	const [step, setStep] = React.useState<"form" | "done">("form");
+	const [chosenMethod, setChosenMethod] = React.useState<PaymentMethod | null>(
+		null,
+	);
 
-	// Reset the form whenever a new item's dialog opens.
+	// Reset whenever a new item's dialog opens.
 	React.useEffect(() => {
 		if (open) {
 			setAmount(25);
 			setName("");
 			setNote("");
-			setDone(false);
+			setStep("form");
+			setChosenMethod(null);
 		}
 	}, [open]);
 
@@ -53,19 +85,39 @@ export function ContributeDialog({
 	const remaining = Math.max(itemTotalGoal(item) - item.raised, 0);
 	const numericAmount = typeof amount === "number" ? amount : 0;
 
-	function handleSubmit(e: React.FormEvent) {
+	function goToPay(e: React.FormEvent) {
 		e.preventDefault();
-		if (!item || numericAmount <= 0) return;
-		onContribute(item.id, numericAmount);
-		setDone(true);
+		if (numericAmount > 0) setStep("done");
+	}
+
+	function handlePay(method: PaymentMethod) {
+		if (!item) return;
+		// window.open must run synchronously in the click handler (popup blockers).
+		const url = paymentLinks(numericAmount, note)[method];
+		window.open(url, "_blank", "noopener,noreferrer");
+		setChosenMethod(method);
+		setStep("done");
+		// Persist + notify in the background; the UI doesn't wait on it.
+		void Promise.resolve(
+			onContribute({
+				itemId: item.id,
+				itemName: item.name,
+				amount: numericAmount,
+				name: name.trim() || undefined,
+				note: note.trim() || undefined,
+				method,
+			}),
+		).catch(() => {
+			// Recording is best-effort; the guest has already been sent to pay.
+		});
 	}
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="sm:max-w-md">
-				{done ? (
+				{step === "done" ? (
 					<div className="flex flex-col items-center gap-3 py-4 text-center">
-						<div className="flex size-16 items-center justify-center rounded-full bg-secondary text-3xl">
+						<div className="flex size-16 items-center justify-center rounded-full bg-secondary">
 							<PartyPopper className="size-7 text-clay" />
 						</div>
 						<DialogHeader className="items-center">
@@ -73,35 +125,48 @@ export function ContributeDialog({
 								Thank you so much! 💛
 							</DialogTitle>
 							<DialogDescription className="text-base">
-								Your {formatMoney(numericAmount)} toward{" "}
+								Thank you for sending {formatMoney(numericAmount)} toward{" "}
 								<span className="font-semibold text-foreground">
 									{item.name}
-								</span>{" "}
-								means the world to Andrew & Marisa.
+								</span>
+								{"!"}
 							</DialogDescription>
 						</DialogHeader>
+						{chosenMethod && (
+							<Button
+								variant="outline"
+								className="rounded-full"
+								onClick={() =>
+									window.open(
+										paymentLinks(numericAmount, note)[chosenMethod],
+										"_blank",
+										"noopener,noreferrer",
+									)
+								}
+							>
+								Reopen {PAYMENT_LABELS[chosenMethod]}
+							</Button>
+						)}
 						<DialogClose asChild>
-							<Button className="mt-2 rounded-full px-6">
+							<Button className="mt-1 rounded-full px-6">
 								Back to the registry
 							</Button>
 						</DialogClose>
 					</div>
 				) : (
-					<form onSubmit={handleSubmit}>
+					<form onSubmit={goToPay}>
 						<DialogHeader>
 							<div className="mb-1 flex items-center gap-3">
 								<span className="text-3xl" aria-hidden>
 									{item.emoji}
 								</span>
-								<div>
-									<DialogTitle className="font-display text-xl">
-										Contribute to {item.name}
-									</DialogTitle>
-								</div>
+								<DialogTitle className="font-display text-xl">
+									Contribute to {item.name}
+								</DialogTitle>
 							</div>
 							<DialogDescription>
-								You're chipping in money toward this gift — you won't be charged
-								or buying anything here.{" "}
+								You're chipping in money toward this gift — nothing is purchased
+								here.{" "}
 								{remaining > 0 ? (
 									<>Just {formatMoney(remaining)} left to fully fund it.</>
 								) : (
@@ -185,20 +250,33 @@ export function ContributeDialog({
 							</div>
 						</div>
 
-						<DialogFooter className="gap-2 sm:gap-2">
-							<DialogClose asChild>
-								<Button type="button" variant="ghost" className="rounded-full">
-									Maybe later
-								</Button>
-							</DialogClose>
-							<Button
-								type="submit"
-								className="rounded-full px-6"
-								disabled={numericAmount <= 0}
-							>
-								<Heart className="size-4" />
-								Contribute {numericAmount > 0 ? formatMoney(numericAmount) : ""}
-							</Button>
+						<Label>Finish up</Label>
+						<DialogFooter className="gap-3 sm:gap-3 mt-2 sm:justify-start">
+							<TooltipProvider delayDuration={150}>
+								{METHOD_ORDER.map((method) => {
+									const Icon = PAYMENT_ICONS[method];
+									return (
+										<Tooltip key={PAYMENT_LABELS[method]}>
+											<TooltipTrigger asChild>
+												<Button
+													key={method}
+													type="button"
+													onClick={() => handlePay(method)}
+													className={cn(
+														"flex items-center justify-center rounded-full text-base font-bold transition-all p-6",
+														METHOD_STYLES[method],
+													)}
+												>
+													<Icon className="size-6" />
+												</Button>
+											</TooltipTrigger>
+											<TooltipContent className="max-w-xs text-center">
+												{PAYMENT_LABELS[method]}
+											</TooltipContent>
+										</Tooltip>
+									);
+								})}
+							</TooltipProvider>
 						</DialogFooter>
 					</form>
 				)}

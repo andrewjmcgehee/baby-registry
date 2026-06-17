@@ -7,6 +7,11 @@
  * `registryItems` + `contributions` schema (see notes at the bottom).
  */
 
+import { BiLogoVenmo } from "react-icons/bi";
+import { FaPaypal } from "react-icons/fa";
+import type { IconType } from "react-icons/lib";
+import { TbBrandCashapp } from "react-icons/tb";
+
 export type RegistryCategory =
 	| "Feeding"
 	| "Sleeping"
@@ -34,6 +39,51 @@ export interface RegistryItem {
 	raised: number;
 	/** Pastel tile color key, see TILE_TINTS below. */
 	tint: TileTint;
+	/** If true, keeps accepting contributions past its target. Defaults to false. */
+	allowOverfunding?: boolean;
+	/** If true, the "contribute toward anything" button skips this item. */
+	excludeFromAnything?: boolean;
+}
+
+export type PaymentMethod = "venmo" | "paypal" | "cashapp";
+
+/**
+ * Payment handles for the "finish up" step. These are public deep-link targets
+ * (not secrets), so they live in the client bundle. ⬇️ FILL THESE IN ⬇️
+ */
+export const PAYMENT = {
+	/** Venmo username, without the leading @ */
+	venmo: "your-venmo-username",
+	/** PayPal.Me handle — the part after paypal.me/ */
+	paypal: "your-paypalme",
+	/** Cash App $cashtag, without the leading $ */
+	cashapp: "your-cashtag",
+} as const;
+
+export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
+	venmo: "Venmo",
+	paypal: "PayPal",
+	cashapp: "CashApp",
+};
+
+export const PAYMENT_ICONS: Record<PaymentMethod, IconType> = {
+	venmo: BiLogoVenmo,
+	paypal: FaPaypal,
+	cashapp: TbBrandCashapp,
+};
+
+/** Build prefilled payment deep links for a given amount + note. */
+export function paymentLinks(
+	amount: number,
+	note: string,
+): Record<PaymentMethod, string> {
+	const amt = Math.max(0, Math.round(amount));
+	const n = encodeURIComponent(note?.trim() || "Baby gift 💛");
+	return {
+		venmo: `https://venmo.com/${PAYMENT.venmo}?txn=pay&amount=${amt}&note=${n}`,
+		paypal: `https://paypal.me/${PAYMENT.paypal}/${amt}`,
+		cashapp: `https://cash.app/$${PAYMENT.cashapp}/${amt}`,
+	};
 }
 
 /** Total funding target for an item: unit price × quantity. */

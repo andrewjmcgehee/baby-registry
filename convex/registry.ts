@@ -30,6 +30,8 @@ export const listItems = query({
           count: item.count,
           tint: item.tint,
           order: item.order,
+          allowOverfunding: item.allowOverfunding ?? false,
+          excludeFromAnything: item.excludeFromAnything ?? false,
           raised,
         }
       }),
@@ -46,6 +48,7 @@ export const addContribution = mutation({
     amount: v.number(),
     name: v.optional(v.string()),
     note: v.optional(v.string()),
+    method: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     if (!Number.isFinite(args.amount) || args.amount <= 0) {
@@ -61,7 +64,31 @@ export const addContribution = mutation({
       amount: Math.round(args.amount),
       name: args.name?.trim() || undefined,
       note: args.note?.trim() || undefined,
+      method: args.method?.trim() || undefined,
     })
+  },
+})
+
+/**
+ * Public "friendly notes" wall: contributions that left a note. Returns only
+ * the name + note (never the amount), newest first.
+ */
+export const listNotes = query({
+  args: {},
+  handler: async (ctx) => {
+    const contributions = await ctx.db
+      .query('contributions')
+      .order('desc')
+      .collect()
+
+    return contributions
+      .filter((c) => c.note && c.note.trim().length > 0)
+      .map((c) => ({
+        id: c._id,
+        name: c.name ?? null,
+        note: c.note as string,
+        createdAt: c._creationTime,
+      }))
   },
 })
 
@@ -131,6 +158,8 @@ const SEED_ITEMS: Array<{
   price: number
   count?: number
   tint: typeof tintValidator.type
+  allowOverfunding?: boolean
+  excludeFromAnything?: boolean
 }> = [
   {
     name: 'Nursing Pillow',

@@ -1,9 +1,20 @@
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Baby, ChevronLeft, ChevronRight, Gift, Loader2 } from "lucide-react";
+import {
+	Baby,
+	ChevronLeft,
+	ChevronRight,
+	Gift,
+	Info,
+	Loader2,
+} from "lucide-react";
 import * as React from "react";
-import { ContributeDialog } from "#/components/contribute-dialog.tsx";
+import {
+	ContributeDialog,
+	type ContributionPayload,
+} from "#/components/contribute-dialog.tsx";
+import { FriendlyNotes } from "#/components/friendly-notes.tsx";
 import { RegistryItemCard } from "#/components/registry-item-card.tsx";
 import { SiteFooter } from "#/components/site-footer.tsx";
 import { SiteHeader } from "#/components/site-header.tsx";
@@ -21,6 +32,12 @@ import {
 import { Switch } from "#/components/ui/switch.tsx";
 import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs.tsx";
 import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "#/components/ui/tooltip.tsx";
+import {
 	CATEGORIES,
 	COUPLE,
 	itemTotalGoal,
@@ -29,6 +46,7 @@ import {
 import { cn } from "#/lib/utils.ts";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { notifyPayment } from "../server/notify";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -63,8 +81,8 @@ function Home() {
 		(sum, i) => sum + Math.min(i.raised, itemTotalGoal(i)),
 		0,
 	);
-	const overallPct =
-		totalGoal > 0 ? Math.round((totalRaised / totalGoal) * 100) : 0;
+	// Keep one decimal of precision for the primary progress bar.
+	const overallPct = totalGoal > 0 ? (totalRaised / totalGoal) * 100 : 0;
 	const fundedCount = items.filter((i) => i.raised >= itemTotalGoal(i)).length;
 
 	const visibleItems = React.useMemo(() => {
@@ -117,11 +135,36 @@ function Home() {
 		setDialogOpen(true);
 	}
 
-	// Persist the contribution. The query result re-renders automatically via
-	// Convex's live subscription, so `raised` updates without any local patching.
-	async function handleContribute(itemId: string, amount: number) {
-		await addContribution({ itemId: itemId as Id<"registryItems">, amount });
+	// Persist the contribution (Convex live-subscription updates `raised`), then
+	// fire the Slack ping in the background.
+	async function handleContribute(payload: ContributionPayload) {
+		await addContribution({
+			itemId: payload.itemId as Id<"registryItems">,
+			amount: payload.amount,
+			name: payload.name,
+			note: payload.note,
+			method: payload.method,
+		});
+		void notifyPayment({
+			data: {
+				itemName: payload.itemName,
+				amount: payload.amount,
+				name: payload.name,
+				note: payload.note,
+				method: payload.method,
+			},
+		}).catch(() => {
+			// Slack ping is best-effort — never block the contribution flow.
+		});
 	}
+
+	// "Contribute toward anything" targets the item with the largest funding gap,
+	// skipping any item flagged excludeFromAnything (e.g. the college fund).
+	const neediest = [...items]
+		.filter((i) => !i.excludeFromAnything && i.raised < itemTotalGoal(i))
+		.sort(
+			(a, b) => itemTotalGoal(b) - b.raised - (itemTotalGoal(a) - a.raised),
+		)[0];
 
 	return (
 		<div className="flex min-h-screen flex-col">
@@ -179,11 +222,41 @@ function Home() {
 									</div>
 								</div>
 								<span className="font-display text-2xl font-bold text-sage-deep">
-									{overallPct}%
+									{overallPct.toFixed(1)}%
 								</span>
 							</div>
 							<Progress value={overallPct} className="mt-4 h-3 bg-muted" />
 						</Card>
+					)}
+
+					{neediest && (
+						<div className="mt-6 flex items-center justify-center gap-2">
+							<Button
+								size="lg"
+								className="rounded-full"
+								onClick={() => openContribute(neediest)}
+							>
+								<Gift className="size-4" />
+								Contribute toward anything
+							</Button>
+							<TooltipProvider delayDuration={150}>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<button
+											type="button"
+											aria-label="How this works"
+											className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+										>
+											<Info className="size-4" />
+										</button>
+									</TooltipTrigger>
+									<TooltipContent className="text-center">
+										We'll automatically allocate your gift to whatever needs the
+										most help!
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
+						</div>
 					)}
 				</section>
 
@@ -288,6 +361,8 @@ function Home() {
 						</p>
 					)}
 				</section>
+
+				<FriendlyNotes />
 			</main>
 
 			<SiteFooter />

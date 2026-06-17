@@ -24,6 +24,8 @@ export function RegistryItemCard({
 	const pct = Math.min(Math.round((item.raised / total) * 100), 100);
 	const funded = item.raised >= total;
 	const remaining = Math.max(total - item.raised, 0);
+	// Funded items stop accepting contributions unless they opt into overfunding.
+	const acceptsMore = !funded || (item.allowOverfunding ?? false);
 	const tint = TILE_TINTS[item.tint];
 
 	return (
@@ -81,11 +83,14 @@ export function RegistryItemCard({
 						onClick={() => onContribute(item)}
 						variant={funded ? "outline" : "default"}
 						className="w-full rounded-full"
+						disabled={!acceptsMore}
 					>
 						<Heart className="size-4" />
-						{funded
-							? "Add a little extra"
-							: `Contribute · $${remaining.toLocaleString()} to go`}
+						{!funded
+							? `Contribute · $${remaining.toLocaleString()} to go`
+							: acceptsMore
+								? "Add a little extra"
+								: "Fully funded 💛"}
 					</Button>
 				</div>
 			</div>

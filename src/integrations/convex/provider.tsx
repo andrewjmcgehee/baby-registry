@@ -1,5 +1,5 @@
-import { ConvexProvider } from "convex/react";
 import type { ConvexReactClient } from "convex/react";
+import { ConvexProvider } from "convex/react";
 
 export default function AppConvexProvider({
 	client,

@@ -50,6 +50,7 @@ export const listContributions = query({
       amount: c.amount,
       name: c.name ?? null,
       note: c.note ?? null,
+      method: c.method ?? null,
       createdAt: c._creationTime,
     }))
   },
