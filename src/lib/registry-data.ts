@@ -8,12 +8,16 @@
  */
 
 export type RegistryCategory =
-	| "Nursery"
-	| "On the Go"
-	| "Essentials"
 	| "Feeding"
-	| "Playtime"
-	| "Big Dreams";
+	| "Sleeping"
+	| "Diapering"
+	| "Gear"
+	| "Health & Safety"
+	| "Bathing"
+	| "Nursery"
+	| "Clothing"
+	| "Playing"
+	| "Growing Up";
 
 export interface RegistryItem {
 	id: string;
@@ -45,17 +49,20 @@ export const COUPLE = {
 	title: "Andrew & Marisa's Baby",
 	year: 2026,
 	// A warm, gender-neutral note from the parents-to-be.
-	note: "We're keeping the nursery a surprise! Instead of gifts, we'd be so grateful for a little help making our home ready for the newest McGehee. Every dollar — big or small — means the world to us. 💛",
-	arrivalLabel: "Arriving Autumn 2026",
+	arrivalLabel: "Arriving December 2026",
 };
 
 export const CATEGORIES: RegistryCategory[] = [
 	"Nursery",
-	"On the Go",
-	"Essentials",
 	"Feeding",
-	"Playtime",
-	"Big Dreams",
+	"Sleeping",
+	"Diapering",
+	"Gear",
+	"Health & Safety",
+	"Bathing",
+	"Clothing",
+	"Playing",
+	"Growing Up",
 ];
 
 export const REGISTRY_ITEMS: RegistryItem[] = [
@@ -96,7 +103,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		name: "Soft-Structured Baby Carrier",
 		emoji: "🧸",
 		blurb: "Keep baby close and hands free on every little adventure.",
-		category: "On the Go",
+		category: "Gear",
 		goal: 160,
 		raised: 160,
 		tint: "honey",
@@ -107,7 +114,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		emoji: "🚼",
 		blurb:
 			"One smooth-rolling system for strolls, errands, and first road trips.",
-		category: "On the Go",
+		category: "Gear",
 		goal: 420,
 		raised: 135,
 		tint: "sage",
@@ -117,7 +124,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		name: "Video Baby Monitor",
 		emoji: "📷",
 		blurb: "A little peace of mind so we can peek in without a peep.",
-		category: "Essentials",
+		category: "Health & Safety",
 		goal: 200,
 		raised: 200,
 		tint: "sky",
@@ -127,7 +134,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		name: "Diaper Fund (6 months)",
 		emoji: "🧷",
 		blurb: "The least glamorous gift — and somehow the most appreciated.",
-		category: "Essentials",
+		category: "Diapering",
 		goal: 300,
 		raised: 145,
 		tint: "honey",
@@ -157,7 +164,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		name: "Soft Play Mat",
 		emoji: "🧩",
 		blurb: "A squishy little world for tummy time and giggles.",
-		category: "Playtime",
+		category: "Playing",
 		goal: 90,
 		raised: 45,
 		tint: "sky",
@@ -167,7 +174,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		name: "Library Starter Bundle",
 		emoji: "📚",
 		blurb: "Board books to read aloud before bed (over and over and over).",
-		category: "Playtime",
+		category: "Playing",
 		goal: 120,
 		raised: 70,
 		tint: "honey",
@@ -178,7 +185,7 @@ export const REGISTRY_ITEMS: RegistryItem[] = [
 		emoji: "🎓",
 		blurb:
 			"A tiny seed for someday-big dreams. Future grad thanks you in advance!",
-		category: "Big Dreams",
+		category: "Growing Up",
 		goal: 1000,
 		raised: 275,
 		tint: "clay",

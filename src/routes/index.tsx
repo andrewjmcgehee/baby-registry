@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Gift, Sparkles } from "lucide-react";
+import { Baby, Gift } from "lucide-react";
 import * as React from "react";
 
 import { ContributeDialog } from "#/components/contribute-dialog.tsx";
@@ -96,11 +96,6 @@ function Home() {
 				{/* Hero */}
 				<section className="page-wrap pt-12 pb-8 text-center sm:pt-16">
 					<div className="rise-in mx-auto flex max-w-2xl flex-col items-center">
-						<span className="kicker">
-							<Sparkles className="size-3.5" />
-							{COUPLE.arrivalLabel}
-						</span>
-
 						<div className="mt-6 flex -space-x-3">
 							<Avatar className="size-14 border-2 border-card shadow-sm">
 								<AvatarFallback className="bg-sage text-lg font-bold text-primary-foreground">
@@ -114,12 +109,19 @@ function Home() {
 							</Avatar>
 						</div>
 
-						<h1 className="mt-5 font-display text-4xl font-bold tracking-tight sm:text-5xl">
-							{COUPLE.title}{" "}
-							<span className="text-sage-deep">{COUPLE.year}</span>
+						<span className="kicker mt-6">
+							<Baby className="size-3.5" />
+							{COUPLE.arrivalLabel}
+						</span>
+
+						<h1 className="mt-5 font-display text-3xl font-bold tracking-tighter sm:text-5xl">
+							We're having a baby!
 						</h1>
 						<p className="mt-4 text-base leading-relaxed text-ink-soft sm:text-lg">
-							{COUPLE.note}
+							But, we're picky... 😅<br />
+							So we're accepting monetary contributions instead of gifts. Thank
+							you so much for helping us prepare for the newest McGehee to enter
+							the world! 💛
 						</p>
 					</div>
 
