@@ -10,7 +10,6 @@
 import { BiLogoVenmo } from "react-icons/bi";
 import { FaPaypal } from "react-icons/fa";
 import type { IconType } from "react-icons/lib";
-import { TbBrandCashapp } from "react-icons/tb";
 
 export type RegistryCategory =
 	| "Feeding"
@@ -45,7 +44,7 @@ export interface RegistryItem {
 	excludeFromAnything?: boolean;
 }
 
-export type PaymentMethod = "venmo" | "paypal" | "cashapp";
+export type PaymentMethod = "venmo" | "paypal";
 
 /**
  * Payment handles for the "finish up" step. These are public deep-link targets
@@ -53,23 +52,19 @@ export type PaymentMethod = "venmo" | "paypal" | "cashapp";
  */
 export const PAYMENT = {
 	/** Venmo username, without the leading @ */
-	venmo: "your-venmo-username",
+	venmo: "MarisaRodriguezMcGehee",
 	/** PayPal.Me handle — the part after paypal.me/ */
-	paypal: "your-paypalme",
-	/** Cash App $cashtag, without the leading $ */
-	cashapp: "your-cashtag",
+	paypal: "marisamcgehee",
 } as const;
 
 export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
 	venmo: "Venmo",
 	paypal: "PayPal",
-	cashapp: "CashApp",
 };
 
 export const PAYMENT_ICONS: Record<PaymentMethod, IconType> = {
 	venmo: BiLogoVenmo,
 	paypal: FaPaypal,
-	cashapp: TbBrandCashapp,
 };
 
 /** Build prefilled payment deep links for a given amount + note. */
@@ -82,7 +77,6 @@ export function paymentLinks(
 	return {
 		venmo: `https://venmo.com/${PAYMENT.venmo}?txn=pay&amount=${amt}&note=${n}`,
 		paypal: `https://paypal.me/${PAYMENT.paypal}/${amt}`,
-		cashapp: `https://cash.app/$${PAYMENT.cashapp}/${amt}`,
 	};
 }
 
