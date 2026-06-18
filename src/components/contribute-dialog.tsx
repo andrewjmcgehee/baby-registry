@@ -70,18 +70,26 @@ export function ContributeDialog({
 
 	// Reset whenever a new item's dialog opens.
 	React.useEffect(() => {
-		if (open) {
-			setAmount(25);
+		if (open && item) {
+			// Default to $25, but never more than what's left to fully fund it
+			// (items that allow overfunding have no cap).
+			const fundCap = (item.allowOverfunding ?? false)
+				? Infinity
+				: Math.max(itemTotalGoal(item) - item.raised, 0);
+			setAmount(Math.min(25, fundCap));
 			setName("");
 			setNote("");
 			setStep("form");
 			setChosenMethod(null);
 		}
-	}, [open]);
+	}, [open, item]);
 
 	if (!item) return null;
 
 	const remaining = Math.max(itemTotalGoal(item) - item.raised, 0);
+	// How much a single contribution can be. Items that allow overfunding can
+	// go past their target; everything else is capped at what's left.
+	const cap = (item.allowOverfunding ?? false) ? Infinity : remaining;
 	const numericAmount = typeof amount === "number" ? amount : 0;
 
 	function goToPay(e: React.FormEvent) {
@@ -178,21 +186,27 @@ export function ContributeDialog({
 							<div className="grid gap-2">
 								<Label>Choose an amount</Label>
 								<div className="grid grid-cols-4 gap-2">
-									{PRESET_AMOUNTS.map((preset) => (
-										<button
-											key={preset}
-											type="button"
-											onClick={() => setAmount(preset)}
-											className={cn(
-												"rounded-full border py-2 text-sm font-semibold transition-colors",
-												amount === preset
-													? "border-primary bg-primary text-primary-foreground"
-													: "border-border bg-card hover:bg-muted",
-											)}
-										>
-											${preset}
-										</button>
-									))}
+									{PRESET_AMOUNTS.map((preset) => {
+										const overCap = preset > cap;
+										return (
+											<button
+												key={preset}
+												type="button"
+												disabled={overCap}
+												onClick={() => setAmount(preset)}
+												className={cn(
+													"cursor-pointer rounded-full border py-2 text-sm font-semibold transition-colors",
+													overCap
+														? "cursor-not-allowed border-border bg-card text-muted-foreground opacity-50"
+														: amount === preset
+															? "border-primary bg-primary text-primary-foreground"
+															: "border-border bg-card hover:bg-muted",
+												)}
+											>
+												${preset}
+											</button>
+										);
+									})}
 								</div>
 							</div>
 
@@ -213,14 +227,17 @@ export function ContributeDialog({
 										id="custom-amount"
 										type="number"
 										min={1}
+										max={cap === Infinity ? undefined : cap}
 										inputMode="numeric"
 										className="pl-7"
 										value={amount}
-										onChange={(e) =>
-											setAmount(
-												e.target.value === "" ? "" : Number(e.target.value),
-											)
-										}
+										onChange={(e) => {
+											if (e.target.value === "") {
+												setAmount("");
+												return;
+											}
+											setAmount(Math.min(Number(e.target.value), cap));
+										}}
 									/>
 								</div>
 							</div>

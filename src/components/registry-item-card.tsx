@@ -9,6 +9,7 @@ import {
 	type RegistryItem,
 	TILE_TINTS,
 } from "#/lib/registry-data.ts";
+import { cn } from "#/lib/utils.ts";
 
 interface RegistryItemCardProps {
 	item: RegistryItem;
@@ -29,7 +30,13 @@ export function RegistryItemCard({
 	const tint = TILE_TINTS[item.tint];
 
 	return (
-		<Card className="soft-card-hover overflow-hidden">
+		<Card
+			className={cn(
+				"soft-card-hover overflow-hidden",
+				acceptsMore && "cursor-pointer",
+			)}
+			onClick={acceptsMore ? () => onContribute(item) : undefined}
+		>
 			{/* emoji tile */}
 			<div
 				className="relative flex h-40 items-center justify-center"
@@ -80,7 +87,11 @@ export function RegistryItemCard({
 					</div>
 
 					<Button
-						onClick={() => onContribute(item)}
+						onClick={(e) => {
+							// The whole card is clickable; don't double-fire.
+							e.stopPropagation();
+							onContribute(item);
+						}}
 						variant={funded ? "outline" : "default"}
 						className="w-full rounded-full"
 						disabled={!acceptsMore}

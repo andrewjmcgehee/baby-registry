@@ -375,7 +375,7 @@ function SortHeader({
 	return (
 		<button
 			type="button"
-			className="-ml-1 inline-flex items-center gap-1 rounded px-1 font-medium hover:text-foreground"
+			className="-ml-1 inline-flex cursor-pointer items-center gap-1 rounded px-1 font-medium hover:text-foreground"
 			onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
 		>
 			{children}

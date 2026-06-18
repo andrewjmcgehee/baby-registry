@@ -247,7 +247,7 @@ function Home() {
 										<button
 											type="button"
 											aria-label="How this works"
-											className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+											className="flex size-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
 										>
 											<Info className="size-4" />
 										</button>
