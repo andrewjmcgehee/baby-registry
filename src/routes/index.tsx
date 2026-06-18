@@ -196,10 +196,11 @@ function Home() {
 							We're having a baby!
 						</h1>
 						<p className="mt-4 text-base leading-relaxed text-ink-soft sm:text-lg">
-							But, we're picky... 😅<br />
-							So we're accepting monetary contributions instead of gifts. Thank
-							you so much for helping us prepare for the newest McGehee to enter
-							the world! 💛
+							But, we all live so far apart now... 😅<br />
+							So we're accepting monetary contributions instead of gifts. We
+							hope it will save us all a lot of hassle (and shipping costs)!
+							Thank you so much for helping us prepare for the newest McGehee to
+							enter the world! 💛
 						</p>
 					</div>
 
