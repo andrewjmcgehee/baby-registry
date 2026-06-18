@@ -195,12 +195,13 @@ function Home() {
 						<h1 className="mt-5 font-display text-3xl font-bold tracking-tighter sm:text-5xl">
 							We're having a baby!
 						</h1>
-						<p className="mt-4 text-base leading-relaxed text-ink-soft sm:text-lg">
-							But, we all live so far apart now... 😅<br />
-							So we're accepting monetary contributions instead of gifts. We
-							hope it will save us all a lot of hassle (and shipping costs)!
-							Thank you so much for helping us prepare for the newest McGehee to
-							enter the world! 💛
+						<p className="mt-6 text-base leading-relaxed text-ink-soft sm:text-base">
+							We're so grateful for your help welcoming the newest McGehee! 💛
+							<br />
+							To save y'all the shipping costs to Texas, we're doing our
+							registry a little differently.
+							<br />
+							We're kindly requesting monetary gifts in lieu of presents.
 						</p>
 					</div>
 
