@@ -70,29 +70,6 @@ export const addContribution = mutation({
 })
 
 /**
- * Public "friendly notes" wall: contributions that left a note. Returns only
- * the name + note (never the amount), newest first.
- */
-export const listNotes = query({
-  args: {},
-  handler: async (ctx) => {
-    const contributions = await ctx.db
-      .query('contributions')
-      .order('desc')
-      .collect()
-
-    return contributions
-      .filter((c) => c.note && c.note.trim().length > 0)
-      .map((c) => ({
-        id: c._id,
-        name: c.name ?? null,
-        note: c.note as string,
-        createdAt: c._creationTime,
-      }))
-  },
-})
-
-/**
  * One-time seed for the starter registry. Not run automatically — invoke it
  * yourself when you want to populate the dev deployment, e.g.:
  *

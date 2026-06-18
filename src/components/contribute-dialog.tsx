@@ -259,7 +259,8 @@ export function ContributeDialog({
 								<Textarea
 									id="contributor-note"
 									placeholder="Can't wait to meet your little one!"
-									rows={2}
+									className="min-h-28"
+									rows={4}
 									value={note}
 									onChange={(e) => setNote(e.target.value)}
 								/>

@@ -14,7 +14,6 @@ import {
 	ContributeDialog,
 	type ContributionPayload,
 } from "#/components/contribute-dialog.tsx";
-import { FriendlyNotes } from "#/components/friendly-notes.tsx";
 import { RegistryItemCard } from "#/components/registry-item-card.tsx";
 import { SiteFooter } from "#/components/site-footer.tsx";
 import { SiteHeader } from "#/components/site-header.tsx";
@@ -363,8 +362,6 @@ function Home() {
 						</p>
 					)}
 				</section>
-
-				<FriendlyNotes />
 			</main>
 
 			<SiteFooter />
