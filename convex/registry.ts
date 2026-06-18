@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 
-import { mutation, query } from './_generated/server'
+import { internalMutation, mutation, query } from './_generated/server'
 import { categoryValidator, tintValidator } from './schema'
 
 /**
@@ -100,7 +100,7 @@ export const listNotes = query({
  *
  * Safe to call repeatedly: it no-ops if items already exist.
  */
-export const seed = mutation({
+export const seed = internalMutation({
   args: {},
   handler: async (ctx) => {
     const existing = await ctx.db.query('registryItems').first()
@@ -124,7 +124,7 @@ export const seed = mutation({
  *
  *   pnpm dlx convex run registry:reseed
  */
-export const reseed = mutation({
+export const reseed = internalMutation({
   args: {},
   handler: async (ctx) => {
     const items = await ctx.db.query('registryItems').collect()
