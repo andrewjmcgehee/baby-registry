@@ -48,7 +48,7 @@ export const listContributions = query({
       itemId: c.itemId,
       itemName: nameById.get(c.itemId) ?? '(deleted item)',
       amount: c.amount,
-      name: c.name ?? null,
+      name: c.name,
       note: c.note ?? null,
       method: c.method ?? null,
       createdAt: c._creationTime,

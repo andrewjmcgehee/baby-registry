@@ -46,13 +46,17 @@ export const addContribution = mutation({
   args: {
     itemId: v.id('registryItems'),
     amount: v.number(),
-    name: v.optional(v.string()),
+    name: v.string(),
     note: v.optional(v.string()),
     method: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     if (!Number.isFinite(args.amount) || args.amount <= 0) {
       throw new Error('Contribution amount must be greater than zero.')
+    }
+    const name = args.name.trim()
+    if (!name) {
+      throw new Error('A name is required.')
     }
     const item = await ctx.db.get(args.itemId)
     if (!item) {
@@ -62,7 +66,7 @@ export const addContribution = mutation({
     return await ctx.db.insert('contributions', {
       itemId: args.itemId,
       amount: Math.round(args.amount),
-      name: args.name?.trim() || undefined,
+      name,
       note: args.note?.trim() || undefined,
       method: args.method?.trim() || undefined,
     })

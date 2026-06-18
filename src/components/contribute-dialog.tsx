@@ -42,7 +42,7 @@ export interface ContributionPayload {
 	itemId: string;
 	itemName: string;
 	amount: number;
-	name?: string;
+	name: string;
 	note?: string;
 	method: PaymentMethod;
 }
@@ -73,9 +73,10 @@ export function ContributeDialog({
 		if (open && item) {
 			// Default to $25, but never more than what's left to fully fund it
 			// (items that allow overfunding have no cap).
-			const fundCap = (item.allowOverfunding ?? false)
-				? Infinity
-				: Math.max(itemTotalGoal(item) - item.raised, 0);
+			const fundCap =
+				(item.allowOverfunding ?? false)
+					? Infinity
+					: Math.max(itemTotalGoal(item) - item.raised, 0);
 			setAmount(Math.min(25, fundCap));
 			setName("");
 			setNote("");
@@ -91,14 +92,16 @@ export function ContributeDialog({
 	// go past their target; everything else is capped at what's left.
 	const cap = (item.allowOverfunding ?? false) ? Infinity : remaining;
 	const numericAmount = typeof amount === "number" ? amount : 0;
+	// A name and a positive amount are required before paying.
+	const canSubmit = numericAmount > 0 && name.trim().length > 0;
 
 	function goToPay(e: React.FormEvent) {
 		e.preventDefault();
-		if (numericAmount > 0) setStep("done");
+		if (canSubmit) setStep("done");
 	}
 
 	function handlePay(method: PaymentMethod) {
-		if (!item) return;
+		if (!item || !canSubmit) return;
 		// window.open must run synchronously in the click handler (popup blockers).
 		const url = paymentLinks(numericAmount, note)[method];
 		window.open(url, "_blank", "noopener,noreferrer");
@@ -110,7 +113,7 @@ export function ContributeDialog({
 				itemId: item.id,
 				itemName: item.name,
 				amount: numericAmount,
-				name: name.trim() || undefined,
+				name: name.trim(),
 				note: note.trim() || undefined,
 				method,
 			}),
@@ -243,10 +246,11 @@ export function ContributeDialog({
 							</div>
 
 							<div className="grid gap-2">
-								<Label htmlFor="contributor-name">Your name (optional)</Label>
+								<Label htmlFor="contributor-name">Your name</Label>
 								<Input
 									id="contributor-name"
 									placeholder="Peter Piper"
+									required
 									value={name}
 									onChange={(e) => setName(e.target.value)}
 								/>
@@ -268,6 +272,11 @@ export function ContributeDialog({
 						</div>
 
 						<Label>Finish up</Label>
+						{!canSubmit && (
+							<p className="text-xs text-muted-foreground">
+								Add your name and an amount to continue.
+							</p>
+						)}
 						<DialogFooter className="gap-3 sm:gap-3 mt-2 sm:justify-start">
 							<TooltipProvider delayDuration={150}>
 								{METHOD_ORDER.map((method) => {
@@ -278,6 +287,7 @@ export function ContributeDialog({
 												<Button
 													key={method}
 													type="button"
+													disabled={!canSubmit}
 													onClick={() => handlePay(method)}
 													className={cn(
 														"flex items-center justify-center rounded-full text-base font-bold transition-all p-6",

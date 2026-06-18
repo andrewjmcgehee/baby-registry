@@ -55,7 +55,8 @@ export default defineSchema({
     itemId: v.id('registryItems'),
     /** Dollars contributed. */
     amount: v.number(),
-    name: v.optional(v.string()),
+    /** Contributor's name — required so we know who to thank. */
+    name: v.string(),
     note: v.optional(v.string()),
     /** Which app they said they'd pay with: 'venmo' | 'paypal' | 'cashapp'. */
     method: v.optional(v.string()),
