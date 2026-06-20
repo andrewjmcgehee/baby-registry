@@ -194,7 +194,7 @@ function Home() {
 						<h1 className="mt-5 font-display text-3xl font-bold tracking-tighter sm:text-5xl">
 							We're having a baby!
 						</h1>
-						<p className="mt-6 text-base leading-relaxed text-ink-soft sm:text-base">
+						<p className="mt-6 hidden leading-relaxed text-ink-soft sm:block">
 							We're so grateful for your help welcoming the newest McGehee! 💛
 							<br />
 							To save y'all the shipping costs to Texas, we're doing our
@@ -263,7 +263,7 @@ function Home() {
 
 				{/* Category filter + controls */}
 				{items.length > 0 && (
-					<section className="page-wrap space-y-4 pt-4">
+					<section className="hidden page-wrap space-y-4 pt-4 sm:block">
 						<Tabs
 							value={filter}
 							onValueChange={(value) => setFilter(value as Filter)}
@@ -315,7 +315,7 @@ function Home() {
 				)}
 
 				{/* Item grid */}
-				<section ref={cardsRef} className="page-wrap scroll-mt-24 pt-8 pb-4">
+				<section ref={cardsRef} className="page-wrap scroll-mt-24 sm:pt-8 pb-4">
 					{isPending ? (
 						<p className="flex items-center justify-center py-12 text-muted-foreground">
 							<Loader2 className="mr-2 size-4 animate-spin" />
