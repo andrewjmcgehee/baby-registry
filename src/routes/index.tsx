@@ -225,9 +225,14 @@ function Home() {
 									</span>
 									<div>
 										<p className="font-display font-bold leading-tight">
-											${totalRaised.toLocaleString()} raised ·{" "}
-											<span className="text-muted-foreground">
-												${totalPending.toLocaleString()} pending
+											${totalRaised.toLocaleString()} raised
+											<span
+												className={cn(
+													"hidden text-muted-foreground",
+													totalPending > 0 ? "inline" : "hidden",
+												)}
+											>
+												{" · "}${totalPending.toLocaleString()} pending
 											</span>
 										</p>
 										<p className="text-sm text-muted-foreground">
