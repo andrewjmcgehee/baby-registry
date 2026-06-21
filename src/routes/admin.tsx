@@ -9,6 +9,8 @@ import {
 } from "@tanstack/react-table";
 import {
 	ArrowUpDown,
+	CircleCheck,
+	Clock,
 	Loader2,
 	LogOut,
 	ShieldCheck,
@@ -42,6 +44,7 @@ import {
 	listContributions,
 	login,
 	logout,
+	setContributionPending,
 } from "../server/admin";
 
 export const Route = createFileRoute("/admin")({
@@ -157,13 +160,37 @@ function Dashboard({ contributions }: { contributions: Contribution[] }) {
 		null,
 	);
 	const [deleting, setDeleting] = React.useState(false);
+	// Id currently being confirmed/unconfirmed, so we can disable just that row.
+	const [togglingId, setTogglingId] = React.useState<string | null>(null);
 
-	const total = contributions.reduce((sum, c) => sum + c.amount, 0);
+	const confirmedTotal = contributions.reduce(
+		(sum, c) => sum + (c.pending ? 0 : c.amount),
+		0,
+	);
+	const pendingTotal = contributions.reduce(
+		(sum, c) => sum + (c.pending ? c.amount : 0),
+		0,
+	);
 
 	async function handleLogout() {
 		await logout();
 		await router.invalidate();
 	}
+
+	const togglePending = React.useCallback(
+		async (c: Contribution) => {
+			setTogglingId(c.id);
+			try {
+				await setContributionPending({
+					data: { id: c.id, pending: !c.pending },
+				});
+				await router.invalidate();
+			} finally {
+				setTogglingId(null);
+			}
+		},
+		[router],
+	);
 
 	async function confirmDelete() {
 		if (!pendingDelete) return;
@@ -202,6 +229,41 @@ function Dashboard({ contributions }: { contributions: Contribution[] }) {
 						{money(row.original.amount)}
 					</span>
 				),
+			},
+			{
+				accessorKey: "pending",
+				header: ({ column }) => <SortHeader column={column}>Status</SortHeader>,
+				cell: ({ row }) => {
+					const c = row.original;
+					const busy = togglingId === c.id;
+					return (
+						<Button
+							variant="ghost"
+							size="sm"
+							className={
+								c.pending
+									? "rounded-full text-amber-600 hover:text-amber-700"
+									: "rounded-full text-sage-deep hover:text-sage-deep"
+							}
+							onClick={() => togglePending(c)}
+							disabled={busy}
+							title={
+								c.pending
+									? "Mark as confirmed (counts toward totals)"
+									: "Mark as pending (back to unconfirmed)"
+							}
+						>
+							{busy ? (
+								<Loader2 className="size-4 animate-spin" />
+							) : c.pending ? (
+								<Clock className="size-4" />
+							) : (
+								<CircleCheck className="size-4" />
+							)}
+							{c.pending ? "Pending" : "Confirmed"}
+						</Button>
+					);
+				},
 			},
 			{
 				accessorKey: "note",
@@ -244,7 +306,7 @@ function Dashboard({ contributions }: { contributions: Contribution[] }) {
 				),
 			},
 		],
-		[],
+		[togglePending, togglingId],
 	);
 
 	const table = useReactTable({
@@ -264,7 +326,8 @@ function Dashboard({ contributions }: { contributions: Contribution[] }) {
 					<p className="text-sm text-muted-foreground">
 						{contributions.length}{" "}
 						{contributions.length === 1 ? "contribution" : "contributions"} ·{" "}
-						{money(total)} raised in total
+						{money(confirmedTotal)} confirmed
+						{pendingTotal > 0 && ` · ${money(pendingTotal)} pending`}
 					</p>
 				</div>
 				<Button

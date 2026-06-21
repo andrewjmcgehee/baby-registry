@@ -14,13 +14,13 @@ import {
 	ContributeDialog,
 	type ContributionPayload,
 } from "#/components/contribute-dialog.tsx";
+import { FundingBar } from "#/components/funding-bar.tsx";
 import { RegistryItemCard } from "#/components/registry-item-card.tsx";
 import { SiteFooter } from "#/components/site-footer.tsx";
 import { SiteHeader } from "#/components/site-header.tsx";
 import { Avatar, AvatarFallback } from "#/components/ui/avatar.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Card } from "#/components/ui/card.tsx";
-import { Progress } from "#/components/ui/progress.tsx";
 import {
 	Select,
 	SelectContent,
@@ -80,8 +80,19 @@ function Home() {
 		(sum, i) => sum + Math.min(i.raised, itemTotalGoal(i)),
 		0,
 	);
+	// Pending money toward each item, capped at that item's remaining gap so an
+	// over-pledged gift can't inflate the overall bar past its goal.
+	const totalPending = items.reduce(
+		(sum, i) =>
+			sum + Math.min(i.pending ?? 0, Math.max(0, itemTotalGoal(i) - i.raised)),
+		0,
+	);
 	// Keep one decimal of precision for the primary progress bar.
 	const overallPct = totalGoal > 0 ? (totalRaised / totalGoal) * 100 : 0;
+	const overallPendingPct =
+		totalGoal > 0
+			? Math.min((totalPending / totalGoal) * 100, 100 - overallPct)
+			: 0;
 	const fundedCount = items.filter((i) => i.raised >= itemTotalGoal(i)).length;
 
 	const visibleItems = React.useMemo(() => {
@@ -214,19 +225,26 @@ function Home() {
 									</span>
 									<div>
 										<p className="font-display font-bold leading-tight">
-											${totalRaised.toLocaleString()} raised
+											${totalRaised.toLocaleString()} raised ·{" "}
+											<span className="text-muted-foreground">
+												${totalPending.toLocaleString()} pending
+											</span>
 										</p>
 										<p className="text-sm text-muted-foreground">
-											of ${totalGoal.toLocaleString()} goal · {fundedCount} of{" "}
+											${totalGoal.toLocaleString()} goal · {fundedCount} of{" "}
 											{items.length} fully funded
 										</p>
 									</div>
 								</div>
 								<span className="font-display text-2xl font-bold text-sage-deep">
-									{overallPct.toFixed(1)}%
+									{(overallPct + overallPendingPct).toFixed(1)}%
 								</span>
 							</div>
-							<Progress value={overallPct} className="mt-4 h-3 bg-muted" />
+							<FundingBar
+								confirmedPct={overallPct}
+								pendingPct={overallPendingPct}
+								className="mt-4 h-3"
+							/>
 						</Card>
 					)}
 

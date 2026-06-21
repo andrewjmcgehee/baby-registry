@@ -51,8 +51,24 @@ export const listContributions = query({
       name: c.name,
       note: c.note ?? null,
       method: c.method ?? null,
+      // Absent `pending` (legacy rows) is treated as still pending.
+      pending: c.pending ?? true,
       createdAt: c._creationTime,
     }))
+  },
+})
+
+/** Confirm/unconfirm a contribution (toggles whether it counts toward totals). */
+export const setContributionPending = mutation({
+  args: {
+    secret: v.string(),
+    id: v.id('contributions'),
+    pending: v.boolean(),
+  },
+  handler: async (ctx, { secret, id, pending }) => {
+    assertSecret(secret)
+    await ctx.db.patch(id, { pending })
+    return { ok: true }
   },
 })
 

@@ -18,7 +18,15 @@ export const listItems = query({
           .query('contributions')
           .withIndex('by_item', (q) => q.eq('itemId', item._id))
           .collect()
-        const raised = contributions.reduce((sum, c) => sum + c.amount, 0)
+        // Split confirmed money from unverified pledges. Only confirmed
+        // (pending === false) counts as `raised`; everything else (including
+        // legacy rows with no `pending` field) is optimistic `pending`.
+        let raised = 0
+        let pending = 0
+        for (const c of contributions) {
+          if (c.pending === false) raised += c.amount
+          else pending += c.amount
+        }
 
         return {
           id: item._id,
@@ -33,6 +41,7 @@ export const listItems = query({
           allowOverfunding: item.allowOverfunding ?? false,
           excludeFromAnything: item.excludeFromAnything ?? false,
           raised,
+          pending,
         }
       }),
     )
@@ -69,6 +78,8 @@ export const addContribution = mutation({
       name,
       note: args.note?.trim() || undefined,
       method: args.method?.trim() || undefined,
+      // Always starts pending — an admin confirms it once the money lands.
+      pending: true,
     })
   },
 })

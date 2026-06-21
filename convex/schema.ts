@@ -60,5 +60,13 @@ export default defineSchema({
     note: v.optional(v.string()),
     /** Which app they said they'd pay with: 'venmo' | 'paypal' | 'cashapp'. */
     method: v.optional(v.string()),
+    /**
+     * Contributions start pending because they aren't actually linked to a
+     * payment provider (Venmo/PayPal/etc.) — guests just *say* they'll pay.
+     * An admin manually confirms each one (sets this false) once the money
+     * actually arrives. Optional so existing rows validate; absent is treated
+     * as pending, so only confirmed contributions count toward an item's total.
+     */
+    pending: v.optional(v.boolean()),
   }).index('by_item', ['itemId']),
 })

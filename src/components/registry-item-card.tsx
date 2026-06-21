@@ -1,9 +1,9 @@
 import { Check, Heart } from "lucide-react";
 
+import { FundingBar } from "#/components/funding-bar.tsx";
 import { Badge } from "#/components/ui/badge.tsx";
 import { Button } from "#/components/ui/button.tsx";
 import { Card } from "#/components/ui/card.tsx";
-import { Progress } from "#/components/ui/progress.tsx";
 import {
 	itemTotalGoal,
 	type RegistryItem,
@@ -22,7 +22,11 @@ export function RegistryItemCard({
 }: RegistryItemCardProps) {
 	const total = itemTotalGoal(item);
 	const count = item.count ?? 1;
-	const pct = Math.min(Math.round((item.raised / total) * 100), 100);
+	const pending = item.pending ?? 0;
+	const confirmedPct = Math.min((item.raised / total) * 100, 100);
+	// Pending fills whatever room is left after the confirmed segment.
+	const pendingPct = Math.min((pending / total) * 100, 100 - confirmedPct);
+	const pct = Math.round(confirmedPct + pendingPct);
 	const funded = item.raised >= total;
 	const remaining = Math.max(total - item.raised, 0);
 	// Funded items stop accepting contributions unless they opt into overfunding.
@@ -74,7 +78,11 @@ export function RegistryItemCard({
 				</div>
 
 				<div className="mt-auto space-y-2 pt-2">
-					<Progress value={pct} className="h-2.5 bg-muted" />
+					<FundingBar
+						confirmedPct={confirmedPct}
+						pendingPct={pendingPct}
+						className="h-2.5"
+					/>
 					<div className="flex items-baseline justify-between text-sm">
 						<span className="font-bold text-foreground">
 							${item.raised.toLocaleString()}
@@ -85,6 +93,11 @@ export function RegistryItemCard({
 						</span>
 						<span className="font-semibold text-sage-deep">{pct}%</span>
 					</div>
+					{pending > 0 && (
+						<p className="text-xs text-muted-foreground pb-2">
+							+ ${pending.toLocaleString()} pending
+						</p>
+					)}
 
 					<Button
 						onClick={(e) => {

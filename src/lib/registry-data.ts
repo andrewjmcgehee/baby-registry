@@ -34,8 +34,13 @@ export interface RegistryItem {
 	price: number;
 	/** How many of this item we'd love (e.g. 3 plates). Defaults to 1. */
 	count?: number;
-	/** Dollars contributed so far. */
+	/** Dollars contributed and confirmed (real money in hand). */
 	raised: number;
+	/**
+	 * Dollars pledged but not yet confirmed against a payment provider. Shown
+	 * optimistically as a separate segment on the progress bar. Defaults to 0.
+	 */
+	pending?: number;
 	/** Pastel tile color key, see TILE_TINTS below. */
 	tint: TileTint;
 	/** If true, keeps accepting contributions past its target. Defaults to false. */

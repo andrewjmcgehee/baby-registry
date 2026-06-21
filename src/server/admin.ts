@@ -168,3 +168,15 @@ export const deleteContribution = createServerFn({ method: "POST" })
 		});
 		return { ok: true };
 	});
+
+export const setContributionPending = createServerFn({ method: "POST" })
+	.validator(z.object({ id: z.string(), pending: z.boolean() }))
+	.handler(async ({ data }) => {
+		await requireAdmin();
+		await convex().mutation(api.admin.setContributionPending, {
+			secret: requireEnv("ADMIN_SECRET"),
+			id: data.id as Id<"contributions">,
+			pending: data.pending,
+		});
+		return { ok: true };
+	});
