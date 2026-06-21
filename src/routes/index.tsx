@@ -55,8 +55,8 @@ type SortKey = "featured" | "most" | "least" | "name";
 
 const SORT_LABELS: Record<SortKey, string> = {
 	featured: "Featured",
-	most: "Most funded",
-	least: "Needs the most help",
+	most: "Closest to funded",
+	least: "Furthest from funded",
 	name: "Name (A–Z)",
 };
 
@@ -99,6 +99,7 @@ function Home() {
 		// Dollars still needed to fully fund an item, floored at 0.
 		const remaining = (i: RegistryItem) =>
 			Math.max(0, itemTotalGoal(i) - i.raised);
+		const funded = (i: RegistryItem) => i.raised >= itemTotalGoal(i);
 		let list =
 			filter === "All" ? items : items.filter((i) => i.category === filter);
 		if (hideFunded) list = list.filter((i) => i.raised < itemTotalGoal(i));
@@ -115,6 +116,9 @@ function Home() {
 				list = [...list].sort((a, b) => a.name.localeCompare(b.name));
 				break;
 		}
+		// Fully funded items always sink to the bottom, preserving the
+		// chosen order within each group (Array.prototype.sort is stable).
+		list = [...list].sort((a, b) => Number(funded(a)) - Number(funded(b)));
 		return list;
 	}, [items, filter, sort, hideFunded]);
 
