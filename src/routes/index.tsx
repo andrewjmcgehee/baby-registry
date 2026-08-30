@@ -221,69 +221,84 @@ function Home() {
 
 					{/* Overall progress card */}
 					{items.length > 0 && (
-						<Card className="rise-in mx-auto mt-10 max-w-2xl p-6 text-left">
-							<div className="flex items-center justify-between gap-4">
-								<div className="flex items-center gap-2">
-									<span className="flex size-9 items-center justify-center rounded-full bg-secondary">
-										<Gift className="size-4 text-secondary-foreground" />
-									</span>
-									<div>
-										<p className="font-display font-bold leading-tight">
-											${totalRaised.toLocaleString()} raised
-											<span
-												className={cn(
-													"hidden text-muted-foreground",
-													totalPending > 0 ? "inline" : "hidden",
-												)}
-											>
-												{" · "}${totalPending.toLocaleString()} pending
+						<div className="grid grid-cols-8">
+							<div className="flex flex-col justify-center col-span-6">
+								<Card className="rise-in mt-10 p-6 text-left">
+									<div className="flex items-center justify-between gap-4">
+										<div className="flex items-center gap-2">
+											<span className="flex size-9 items-center justify-center rounded-full bg-secondary">
+												<Gift className="size-4 text-secondary-foreground" />
 											</span>
-										</p>
-										<p className="text-sm text-muted-foreground">
-											${totalGoal.toLocaleString()} goal · {fundedCount} of{" "}
-											{items.length} fully funded
-										</p>
+											<div>
+												<p className="font-display font-bold leading-tight">
+													${totalRaised.toLocaleString()} raised
+													<span
+														className={cn(
+															"hidden text-muted-foreground",
+															totalPending > 0 ? "inline" : "hidden",
+														)}
+													>
+														{" · "}${totalPending.toLocaleString()} pending
+													</span>
+												</p>
+												<p className="text-sm text-muted-foreground">
+													${totalGoal.toLocaleString()} goal · {fundedCount} of{" "}
+													{items.length} fully funded
+												</p>
+											</div>
+										</div>
+										<span className="font-display text-2xl font-bold text-sage-deep">
+											{(overallPct + overallPendingPct).toFixed(1)}%
+										</span>
 									</div>
-								</div>
-								<span className="font-display text-2xl font-bold text-sage-deep">
-									{(overallPct + overallPendingPct).toFixed(1)}%
-								</span>
-							</div>
-							<FundingBar
-								confirmedPct={overallPct}
-								pendingPct={overallPendingPct}
-								className="mt-4 h-3"
-							/>
-						</Card>
-					)}
-
-					{neediest && (
-						<div className="mt-6 flex items-center justify-center gap-2">
-							<Button
-								size="lg"
-								className="rounded-full"
-								onClick={() => openContribute(neediest)}
-							>
-								<Gift className="size-4" />
-								Contribute toward anything
-							</Button>
-							<TooltipProvider delayDuration={150}>
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<button
-											type="button"
-											aria-label="How this works"
-											className="flex size-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+									<FundingBar
+										confirmedPct={overallPct}
+										pendingPct={overallPendingPct}
+										className="mt-4 h-3"
+									/>
+								</Card>
+								{neediest && (
+									<div className="mt-6 flex items-center gap-2">
+										<Button
+											size="lg"
+											className="rounded-full"
+											onClick={() => openContribute(neediest)}
 										>
-											<Info className="size-4" />
-										</button>
-									</TooltipTrigger>
-									<TooltipContent className="text-center">
-										We'll automatically allocate your gift to whatever needs the
-										most help!
-									</TooltipContent>
-								</Tooltip>
-							</TooltipProvider>
+											<Gift className="size-4" />
+											Contribute toward anything
+										</Button>
+										<TooltipProvider delayDuration={150}>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<button
+														type="button"
+														aria-label="How this works"
+														className="flex size-7 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+													>
+														<Info className="size-4" />
+													</button>
+												</TooltipTrigger>
+												<TooltipContent className="text-center">
+													We'll automatically allocate your gift to whatever
+													needs the most help!
+												</TooltipContent>
+											</Tooltip>
+										</TooltipProvider>
+									</div>
+								)}
+							</div>
+							<div className="flex flex-col items-center justify-center col-span-2">
+								<img
+									src="/photos-qr.png"
+									height={118}
+									width={118}
+									className="soft-card rounded-sm! rise-in mt-10 text-left"
+									alt="qr code for downloading shower photos"
+								/>
+								<p className="mt-6 text-muted-foreground">
+									Scan the QR Code to View &amp; Download our photos!
+								</p>
+							</div>
 						</div>
 					)}
 				</section>
