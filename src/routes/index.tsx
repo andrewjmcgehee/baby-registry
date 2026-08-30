@@ -296,7 +296,7 @@ function Home() {
 									alt="qr code for downloading shower photos"
 								/>
 								<p className="mt-6 text-muted-foreground">
-									Scan the QR Code to View &amp; Download our photos!
+									Scan the QR Code to View &amp; Download Photos!
 								</p>
 							</div>
 						</div>
